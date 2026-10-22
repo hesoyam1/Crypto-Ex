@@ -1,0 +1,329 @@
+html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoExchange — Быстрый обмен</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .exchange-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        h2 {
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="number"], input[type="text"], select {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+        }
+
+        select {
+            cursor: pointer;
+            flex: 1;
+            max-width: 110px;
+        }
+
+        input[type="number"] {
+            flex: 2;
+        }
+
+        .info-box {
+            background: #111827;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .swap-btn {
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .swap-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .swap-btn:active {
+            transform: scale(0.98);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 999;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+        }
+
+        .wallet-to-pay {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            word-break: break-all;
+            margin: 15px 0;
+            font-family: monospace;
+            border: 1px dashed var(--accent);
+            color: #38bdf8;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="exchange-card">
+    <h2>Крипто Обменник</h2>
+    
+    <!-- Отдаю -->
+    <div class="input-group">
+        <label>Вы отдаете</label>
+        <div class="row">
+            <input type="number" id="sendAmount" value="100" placeholder="0.00" min="0">
+            <select id="sendCurrency">
+                <option value="USDT">USDT</option>
+                <option value="TON">TON</option>
+                <option value="BTC">BTC</option>
+                <option value="ETH">ETH</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Получаю -->
+    <div class="input-group">
+        <label>Вы получаете</label>
+        <div class="row">
+            <input type="number" id="receiveAmount" placeholder="0.00" readonly>
+            <select id="receiveCurrency">
+                <option value="TON" selected>TON</option>
+                <option value="USDT">USDT</option>
+                <option value="BTC">BTC</option>
+                <option value="ETH">ETH</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Адрес пользователя -->
+    <div class="input-group">
+        <label id="walletLabel">Ваш кошелек TON для получения</label>
+        <input type="text" id="userWallet" placeholder="Введите адрес кошелька">
+    </div>
+
+    <!-- Детали обмена -->
+    <div class="info-box">
+        <div class="info-row">
+            <span>Курс обмена:</span>
+            <span id="exchangeRate">Загрузка курсов...</span>
+        </div>
+        <div class="info-row">
+            <span>Комиссия сервиса:</span>
+            <span>0.5% (включена)</span>
+        </div>
+    </div>
+
+    <button class="swap-btn" onclick="processExchange()">Обменять</button>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal" id="paymentModal">
+    <div class="modal-content">
+        <h3>Заявка создана!</h3>
+        <p>Для завершения обмена переведите <b id="modalSendAmount">100</b> <b id="modalSendTicker">USDT</b> на кошелек администратора:</p>
+        
+        <!-- Ваши кошельки для получения перевода -->
+        <div class="wallet-to-pay" id="adminWallet">Загрузка...</div>
+        
+        <p style="font-size: 13px; color: var(--text-muted);">После подтверждения сети, средства поступят на ваш кошелек.</p>
+        <button class="close-btn" onclick="closeModal()">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    // ВАШИ РЕАЛЬНЫЕ КОШЕЛЬКИ ДЛЯ ПРИЕМА ОПЛАТЫ ОТ ПОЛЬЗОВАТЕЛЕЙ
+    const MY_WALLETS = {
+        USDT: "TR7NHqjeKQxGTCi8q8ADE4Pu1YJyeXYZ_YOUR_TRC20_WALLET",
+        TON: "EQBvW8Z5huBk_YOUR_TON_WALLET",
+        BTC: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa_YOUR_BTC_WALLET",
+        ETH: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F_YOUR_ETH_WALLET"
+    };
+
+    // Дефолтные курсы на случай сбоя API
+    let cryptoRates = {
+        USDT: 1,
+        TON: 5.20,
+        BTC: 95000,
+        ETH: 27000
+    };
+
+    const FEE_PERCENT = 0.005; // 0.5% комиссия обменника
+
+    const sendAmountInput = document.getElementById('sendAmount');
+    const receiveAmountInput = document.getElementById('receiveAmount');
+    const sendCurrency = document.getElementById('sendCurrency');
+    const receiveCurrency = document.getElementById('receiveCurrency');
+    const walletLabel = document.getElementById('walletLabel');
+    const exchangeRateText = document.getElementById('exchangeRate');
+
+    // Функция загрузки курсов с CoinGecko API
+    async function fetchRates() {
+        try {
+            const response = await fetch('https://coingecko.com');
+            const data = await response.json();
+            
+            cryptoRates.BTC = data.bitcoin.usd;
+            cryptoRates.ETH = data.ethereum.usd;
+            cryptoRates.TON = data['the-open-network'].usd;
+            cryptoRates.USDT = data.tether.usd;
+            
+            calculateExchange();
+        } catch (error) {
+            console.error("Ошибка обновления курсов API, используются резервные:", error);
+            calculateExchange();
+        }
+    }
+
+    function calculateExchange() {
+        const from = sendCurrency.value;
+        const to = receiveCurrency.value;
+        const amount = parseFloat(sendAmountInput.value) || 0;
+
+        if (from === to) {
+            receiveAmountInput.value = amount;
+            exchangeRateText.innerText = `1 ${from} = 1 ${to}`;
+            walletLabel.innerText = `Ваш кошелек ${to} для получения`;
+            return;
+        }
+
+        const rateFrom = cryptoRates[from];
+        const rateTo = cryptoRates[to];
+        
+        // Кросс-курс с вычетом комиссии сервиса
+        let finalAmount = (amount * rateFrom) / rateTo;
+        finalAmount = finalAmount * (1 - FEE_PERCENT);
+        
+        const precision = (to === 'BTC' || to === 'ETH') ? 6 : 2;
+        receiveAmountInput.value = finalAmount > 0 ? finalAmount.toFixed(precision) : "0.00";
+
+        const singleRate = ((rateFrom / rateTo) * (1 - FEE_PERCENT)).toFixed(precision);
+        exchangeRateText.innerText = `1 ${from} ≈ ${singleRate} ${to}`;
+        walletLabel.innerText = `Ваш кошелек ${to} для получения`;
+    }
+
+    // Слушатели изменений
+    sendAmountInput.addEventListener('input', calculateExchange);
+    sendCurrency.addEventListener('change', calculateExchange);
+    receiveCurrency.addEventListener('change', calculateExchange);
+
+    // Запуск парсинга курсов и цикл обновления каждые 60 секунд
+    fetchRates();
+    setInterval(fetchRates, 60000);
+
+    function processExchange() {
